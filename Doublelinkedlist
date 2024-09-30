@@ -1,0 +1,172 @@
+import tkinter as tk
+from tkinter import ttk
+from tkinter import messagebox
+
+class Node:
+    def __init__(self, data):
+        self.data = data
+        self.prev = None
+        self.next = None
+
+class DoublyLinkedList:
+    def __init__(self):
+        self.head = None
+
+    def insert_at_head(self, data):
+        new_node = Node(data)
+        if self.head is None:
+            self.head = new_node
+        else:
+            new_node.next = self.head
+            self.head.prev = new_node
+            self.head = new_node
+
+    def insert_at_tail(self, data):
+        new_node = Node(data)
+        if self.head is None:
+            self.head = new_node
+        else:
+            temp = self.head
+            while temp.next is not None:
+                temp = temp.next
+            temp.next = new_node
+            new_node.prev = temp
+
+    def delete_node(self, data):
+        temp = self.head
+        while temp is not None:
+            if temp.data == data:
+                if temp.prev is not None:
+                    temp.prev.next = temp.next
+                if temp.next is not None:
+                    temp.next.prev = temp.prev
+                if temp == self.head:
+                    self.head = temp.next
+                return True
+            temp = temp.next
+        return False
+
+    def traverse_forward(self):
+        result = []
+        temp = self.head
+        while temp is not None:
+            result.append(temp.data)
+            temp = temp.next
+        return result
+
+    def traverse_backward(self):
+        result = []
+        temp = self.head
+        if temp is None:
+            return result
+        while temp.next is not None:
+            temp = temp.next
+        while temp is not None:
+            result.append(temp.data)
+            temp = temp.prev
+        return result
+
+class App:
+    def __init__(self, root):
+        self.dll = DoublyLinkedList()
+        self.root = root
+        self.root.title("Doubly Linked List Operations")
+
+        self.create_widgets()
+        self.center_window(500, 400)
+        self.root.configure(bg='pink')
+
+    def create_widgets(self):
+        style = ttk.Style()
+        style.configure("TLabel", background="red", foreground="white", font=("Helvetica", 12))
+        style.configure("TEntry", font=("Helvetica", 12))
+        style.configure("TButton", font=("Helvetica", 12), background="red", foreground="red")
+
+        self.head_label = ttk.Label(self.root, text="Insert at Head:")
+        self.head_label.grid(row=0, column=0, padx=10, pady=10)
+        self.head_entry = ttk.Entry(self.root)
+        self.head_entry.grid(row=0, column=1, padx=10, pady=10)
+        self.head_button = ttk.Button(self.root, text="Insert", command=self.insert_at_head)
+        self.head_button.grid(row=0, column=2, padx=10, pady=10)
+
+        self.tail_label = ttk.Label(self.root, text="Insert at Tail:")
+        self.tail_label.grid(row=1, column=0, padx=10, pady=10)
+        self.tail_entry = ttk.Entry(self.root)
+        self.tail_entry.grid(row=1, column=1, padx=10, pady=10)
+        self.tail_button = ttk.Button(self.root, text="Insert", command=self.insert_at_tail)
+        self.tail_button.grid(row=1, column=2, padx=10, pady=10)
+
+        self.delete_label = ttk.Label(self.root, text="Delete Node:")
+        self.delete_label.grid(row=2, column=0, padx=10, pady=10)
+        self.delete_entry = ttk.Entry(self.root)
+        self.delete_entry.grid(row=2, column=1, padx=10, pady=10)
+        self.delete_button = ttk.Button(self.root, text="Delete", command=self.delete_node)
+        self.delete_button.grid(row=2, column=2, padx=10, pady=10)
+
+        self.traverse_forward_button = ttk.Button(self.root, text="Traverse Forward", command=self.traverse_forward)
+        self.traverse_forward_button.grid(row=3, column=0, columnspan=3, pady=10)
+
+        self.traverse_backward_button = ttk.Button(self.root, text="Traverse Backward", command=self.traverse_backward)
+        self.traverse_backward_button.grid(row=4, column=0, columnspan=3, pady=10)
+
+        self.result_text = tk.Text(self.root, height=10, width=40, font=("Helvetica", 12), bg="white", fg="black")
+        self.result_text.grid(row=5, column=0, columnspan=3, padx=10, pady=10)
+
+    def center_window(self, width, height):
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        x = (screen_width - width) // 2
+        y = (screen_height - height) // 2
+        self.root.geometry(f'{width}x{height}+{x}+{y}')
+
+    def insert_at_head(self):
+        data = self.head_entry.get()
+        if data.isdigit():
+            self.dll.insert_at_head(int(data))
+            self.head_entry.delete(0, tk.END)
+            messagebox.showinfo("Success", "Node inserted at head.")
+        else:
+            messagebox.showerror("Error", "Please enter a valid integer.")
+        self.update_result()
+
+    def insert_at_tail(self):
+        data = self.tail_entry.get()
+        if data.isdigit():
+            self.dll.insert_at_tail(int(data))
+            self.tail_entry.delete(0, tk.END)
+            messagebox.showinfo("Success", "Node inserted at tail.")
+        else:
+            messagebox.showerror("Error", "Please enter a valid integer.")
+        self.update_result()
+
+    def delete_node(self):
+        data = self.delete_entry.get()
+        if data.isdigit():
+            if self.dll.delete_node(int(data)):
+                messagebox.showinfo("Success", "Node deleted.")
+            else:
+                messagebox.showerror("Error", "Node not found.")
+            self.delete_entry.delete(0, tk.END)
+        else:
+            messagebox.showerror("Error", "Please enter a valid integer.")
+        self.update_result()
+
+    def traverse_forward(self):
+        result = self.dll.traverse_forward()
+        self.result_text.delete(1.0, tk.END)
+        self.result_text.insert(tk.END, " -> ".join(map(str, result)))
+
+    def traverse_backward(self):
+        result = self.dll.traverse_backward()
+        self.result_text.delete(1.0, tk.END)
+        self.result_text.insert(tk.END, " -> ".join(map(str, result)))
+
+    def update_result(self):
+        self.result_text.delete(1.0, tk.END)
+        result = self.dll.traverse_forward()
+        self.result_text.insert(tk.END, " -> ".join(map(str, result)))
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = App(root)
+    root.mainloop()
