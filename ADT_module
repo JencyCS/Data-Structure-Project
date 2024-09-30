@@ -1,0 +1,147 @@
+import tkinter as tk
+from tkinter import messagebox
+
+class Stack:
+    def __init__(self):
+        self.items = []
+
+    def is_empty(self):
+        return len(self.items) == 0
+
+    def push(self, item):
+        self.items.append(item)
+
+    def pop(self):
+        if self.is_empty():
+            raise IndexError("pop from empty stack")
+        return self.items.pop()
+
+    def peek(self):
+        if self.is_empty():
+            raise IndexError("peek from empty stack")
+        return self.items[-1]
+
+    def size(self):
+        return len(self.items)
+
+class StackmainGUI:
+    def __init__(self, root):
+        self.stack = Stack()
+
+        self.root = root
+        self.root.title("Stack Operations")
+        self.root.geometry("400x600")
+
+        # Gradient Background
+        self.bg_frame = tk.Frame(root)
+        self.bg_frame.pack(fill='both', expand=True)
+        self.bg_canvas = tk.Canvas(self.bg_frame, width=400, height=600)
+        self.bg_canvas.pack(fill='both', expand=True)
+        self.draw_gradient()
+
+        self.input_frame = tk.Frame(root, bg="#f4f4f4")
+        self.input_frame.place(x=50, y=50)
+
+        self.input_label = tk.Label(self.input_frame, text="Enter item:", bg="#f4f4f4", font=("Arial", 12, "bold"))
+        self.input_label.pack(side=tk.LEFT, padx=5)
+
+        self.input_entry = tk.Entry(self.input_frame, font=("Arial", 12))
+        self.input_entry.pack(side=tk.LEFT)
+
+        self.buttons_frame = tk.Frame(root, bg="#f4f4f4")
+        self.buttons_frame.place(x=50, y=100)
+
+        self.push_button = tk.Button(self.buttons_frame, text="Push", command=self.push_item, bg="#4CAF50", fg="white", font=("Arial", 10, "bold"))
+        self.push_button.grid(row=0, column=0, padx=5)
+
+        self.pop_button = tk.Button(self.buttons_frame, text="Pop", command=self.pop_item, bg="#FF5722", fg="white", font=("Arial", 10, "bold"))
+        self.pop_button.grid(row=0, column=1, padx=5)
+
+        self.peek_button = tk.Button(self.buttons_frame, text="Peek", command=self.peek_item, bg="#03A9F4", fg="white", font=("Arial", 10, "bold"))
+        self.peek_button.grid(row=0, column=2, padx=5)
+
+        self.size_button = tk.Button(self.buttons_frame, text="Size", command=self.show_size, bg="#607D8B", fg="white", font=("Arial", 10, "bold"))
+        self.size_button.grid(row=0, column=3, padx=5)
+
+        self.quit_button = tk.Button(self.buttons_frame, text="Quit", command=root.quit, bg="#9E9E9E", fg="white", font=("Arial", 10, "bold"))
+        self.quit_button.grid(row=0, column=4, padx=5)
+
+        self.stack_canvas = tk.Canvas(root, width=300, height=300, bg="#ffffff", highlightthickness=0)
+        self.stack_canvas.place(x=50, y=200)
+
+        self.update_stack_display()
+
+    def draw_gradient(self):
+        # Draw a vertical gradient
+        for i in range(256):
+            r = 250 #Red
+            g = int(255 - (i * 0.9)) # Green
+            b = int(255 - (i * 0.7)) #Blue 
+            color = f'#{r:02x}{g:02x}{b:02x}'
+            self.bg_canvas.create_line(0, i*2, 400, i*2, fill=color)
+
+    def push_item(self):
+        item = self.input_entry.get().strip()
+        if item:
+            self.stack.push(item)
+            self.update_stack_display()
+            self.input_entry.delete(0, tk.END)
+        else:
+            messagebox.showerror("Error", "Please enter an item to push.")
+
+    def pop_item(self):
+        try:
+            item = self.stack.pop()
+            self.update_stack_display()
+            messagebox.showinfo("Popped Item", f"Popped item: {item}")
+        except IndexError as e:
+            messagebox.showerror("Error", str(e))
+
+    def peek_item(self):
+        try:
+            item = self.stack.peek()
+            messagebox.showinfo("Top Item", f"Top item: {item}")
+        except IndexError as e:
+            messagebox.showerror("Error", str(e))
+
+    def show_size(self):
+        size = self.stack.size()
+        messagebox.showinfo("Stack Size", f"Size of stack: {size}")
+
+    def update_stack_display(self):
+        self.stack_canvas.delete("all")
+        for i, item in enumerate(reversed(self.stack.items)):
+            x1, y1 = 50, 250 - i * 40
+            x2, y2 = 250, 290 - i * 40
+
+            # Create rounded rectangle for stack item with gradient fill
+            self.round_rectangle(self.stack_canvas, x1, y1, x2, y2, 20, fill="#03A9F4")
+            self.stack_canvas.create_text(150, (y1 + y2) / 2, text=item, fill="white", font=("Arial", 12, "bold"))
+
+    def round_rectangle(self, canvas, x1, y1, x2, y2, radius=25, **kwargs):
+        points = [x1+radius, y1,
+                  x1+radius, y1,
+                  x2-radius, y1,
+                  x2-radius, y1,
+                  x2, y1,
+                  x2, y1+radius,
+                  x2, y1+radius,
+                  x2, y2-radius,
+                  x2, y2-radius,
+                  x2, y2,
+                  x2-radius, y2,
+                  x2-radius, y2,
+                  x1+radius, y2,
+                  x1+radius, y2,
+                  x1, y2,
+                  x1, y2-radius,                  
+                  x1, y2-radius,
+                  x1, y1+radius,
+                  x1, y1+radius,
+                  x1, y1]
+        return canvas.create_polygon(points, **kwargs, smooth=True)
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = StackmainGUI(root)
+    root.mainloop()
