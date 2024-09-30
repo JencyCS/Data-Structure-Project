@@ -1,0 +1,225 @@
+import tkinter as tk
+from tkinter import messagebox
+from tkinter import ttk
+import time
+
+class Stack:
+    def __init__(self):
+        self.items = []
+
+    def is_empty(self):
+        return len(self.items) == 0
+
+    def push(self, item):
+        self.items.append(item)
+
+    def pop(self):
+        if self.is_empty():
+            raise IndexError("pop from empty stack")
+        return self.items.pop()
+
+    def peek(self):
+        if self.is_empty():
+            raise IndexError("peek from empty stack")
+        return self.items[-1]
+
+    def size(self):
+        return len(self.items)
+
+    def display(self):
+        if self.is_empty():
+            return "Stack is empty"
+        else:
+            stack_elements = "Stack elements:\n"
+            for item in reversed(self.items):
+                stack_elements += str(item) + "\n"
+            return stack_elements
+
+    def insert(self, index, item):
+        if index < 0 or index > len(self.items):
+            raise IndexError("index out of range")
+        self.items.insert(index, item)
+
+    def delete(self, index):
+        if index < 0 or index >= len(self.items):
+            raise IndexError("index out of range")
+        return self.items.pop(index)
+
+class StackGUI:
+    def __init__(self, root):
+        self.stack = Stack()
+        self.root = root
+        self.root.title("Stack Operations")
+        self.root.geometry("500x600")
+
+        self.create_widgets()
+
+    def create_widgets(self):
+        # Styling
+        self.root.configure(background="#f0f0f0")
+        self.title_label = tk.Label(self.root, text="Stack Operations", font=("Arial", 18, "bold"), bg="#4CAF50", fg="white", pady=10)
+        self.title_label.pack(fill=tk.X)
+
+        self.input_frame = tk.Frame(self.root, bg="#f0f0f0")
+        self.input_frame.pack(pady=10)
+
+        self.input_label = tk.Label(self.input_frame, text="Enter item:", font=("Arial", 12), bg="#f0f0f0")
+        self.input_label.pack(side=tk.LEFT, padx=10)
+
+        self.input_entry = tk.Entry(self.input_frame, font=("Arial", 12))
+        self.input_entry.pack(side=tk.LEFT, padx=10)
+
+        self.buttons_frame = tk.Frame(self.root, bg="#f0f0f0")
+        self.buttons_frame.pack(pady=10)
+
+        self.push_button = tk.Button(self.buttons_frame, text="Push", command=self.push_item, bg="#4CAF50", fg="white", font=("Arial", 12, "bold"), width=10)
+        self.push_button.grid(row=0, column=0, padx=10)
+
+        self.pop_button = tk.Button(self.buttons_frame, text="Pop", command=self.pop_item, bg="#FF5722", fg="white", font=("Arial", 12, "bold"), width=10)
+        self.pop_button.grid(row=0, column=1, padx=10)
+
+        self.peek_button = tk.Button(self.buttons_frame, text="Peek", command=self.peek_item, bg="#03A9F4", fg="white", font=("Arial", 12, "bold"), width=10)
+        self.peek_button.grid(row=0, column=2, padx=10)
+
+        self.insert_button = tk.Button(self.buttons_frame, text="Insert", command=self.insert_item, bg="#9C27B0", fg="white", font=("Arial", 12, "bold"), width=10)
+        self.insert_button.grid(row=0, column=3, padx=10)
+
+        self.delete_button = tk.Button(self.buttons_frame, text="Delete", command=self.delete_item, bg="#795548", fg="white", font=("Arial", 12, "bold"), width=10)
+        self.delete_button.grid(row=0, column=4, padx=10)
+
+        self.size_button = tk.Button(self.buttons_frame, text="Size", command=self.get_size, bg="#607D8B", fg="white", font=("Arial", 12, "bold"), width=10)
+        self.size_button.grid(row=0, column=5, padx=10)
+
+        self.quit_button = tk.Button(self.buttons_frame, text="Quit", command=self.root.quit, bg="#9E9E9E", fg="white", font=("Arial", 12, "bold"), width=10)
+        self.quit_button.grid(row=0, column=6, padx=10)
+
+        self.output_frame = tk.Frame(self.root, bg="#f0f0f0")
+        self.output_frame.pack(pady=10)
+
+        self.output_label = tk.Label(self.output_frame, text="Output:", font=("Arial", 14, "bold"), bg="#f0f0f0")
+        self.output_label.pack()
+
+        self.output_text = tk.Text(self.output_frame, height=10, width=40, wrap=tk.WORD, font=("Arial", 12), bg="white", relief=tk.SOLID, bd=2)
+        self.output_text.pack()
+
+    def push_item(self):
+        item = self.input_entry.get().strip()
+        if item:
+            self.stack.push(item)
+            self.update_output(f"{item} pushed onto stack.")
+            self.animate_operation("push", item)
+            self.input_entry.delete(0, tk.END)
+        else:
+            messagebox.showerror("Error", "Please enter an item to push.")
+
+    def pop_item(self):
+        try:
+            item = self.stack.pop()
+            self.update_output(f"Popped item: {item}")
+            self.animate_operation("pop", item)
+        except IndexError as e:
+            messagebox.showerror("Error", e)
+
+    def peek_item(self):
+        try:
+            item = self.stack.peek()
+            self.update_output(f"Top item: {item}")
+        except IndexError as e:
+            messagebox.showerror("Error", e)
+
+    def insert_item(self):
+        index = self.input_entry.get().strip()
+        item = self.input_entry.get().strip()
+        try:
+            index = int(index)
+            self.stack.insert(index, item)
+            self.update_output(f"{item} inserted at index {index}.")
+            self.animate_operation("insert", item, index)
+            self.input_entry.delete(0, tk.END)
+        except (ValueError, IndexError) as e:
+            messagebox.showerror("Error", e)
+
+    def delete_item(self):
+        index = self.input_entry.get().strip()
+        try:
+            index = int(index)
+            item = self.stack.delete(index)
+            self.update_output(f"Deleted item at index {index}: {item}")
+            self.animate_operation("delete", item, index)
+            self.input_entry.delete(0, tk.END)
+        except (ValueError, IndexError) as e:
+            messagebox.showerror("Error", e)
+
+    def get_size(self):
+        size = self.stack.size()
+        self.update_output(f"Size of stack: {size}")
+
+    def update_output(self, message):
+        self.output_text.config(state=tk.NORMAL)
+        self.output_text.delete("1.0", tk.END)
+        self.output_text.insert(tk.END, message)
+        self.output_text.config(state=tk.DISABLED)
+
+    def animate_operation(self, operation, item=None, index=None):
+        if operation == "push":
+            self.animate_push(item)
+        elif operation == "pop":
+            self.animate_pop(item)
+        elif operation == "insert":
+            self.animate_insert(item, index)
+        elif operation == "delete":
+            self.animate_delete(item, index)
+
+    def animate_push(self, item):
+        # Simulate animation
+        self.output_text.config(state=tk.NORMAL)
+        for i in range(5):
+            self.output_text.delete("1.0", tk.END)
+            self.output_text.insert(tk.END, f"Pushing {item} onto stack...{'.' * (i % 3 + 1)}")
+            self.output_text.pack()
+            self.root.update()
+            time.sleep(0.3)
+        self.output_text.config(state=tk.DISABLED)
+        self.update_output(f"{item} pushed onto stack.")
+
+    def animate_pop(self, item):
+        # Simulate animation
+        self.output_text.config(state=tk.NORMAL)
+        for i in range(5):
+            self.output_text.delete("1.0", tk.END)
+            self.output_text.insert(tk.END, f"Popping {item} from stack...{'.' * (i % 3 + 1)}")
+            self.output_text.pack()
+            self.root.update()
+            time.sleep(0.3)
+        self.output_text.config(state=tk.DISABLED)
+        self.update_output(f"Popped item: {item}")
+
+    def animate_insert(self, item, index):
+        # Simulate animation
+        self.output_text.config(state=tk.NORMAL)
+        for i in range(5):
+            self.output_text.delete("1.0", tk.END)
+            self.output_text.insert(tk.END, f"Inserting {item} at index {index}...{'.' * (i % 3 + 1)}")
+            self.output_text.pack()
+            self.root.update()
+            time.sleep(0.3)
+        self.output_text.config(state=tk.DISABLED)
+        self.update_output(f"{item} inserted at index {index}.")
+
+    def animate_delete(self, item, index):
+        # Simulate animation
+        self.output_text.config(state=tk.NORMAL)
+        for i in range(5):
+            self.output_text.delete("1.0", tk.END)
+            self.output_text.insert(tk.END, f"Deleting item at index {index}...{'.' * (i % 3 + 1)}")
+            self.output_text.pack()
+            self.root.update()
+            time.sleep(0.3)
+        self.output_text.config(state=tk.DISABLED)
+        self.update_output(f"Deleted item at index {index}: {item}")
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = StackGUI(root)
+    root.mainloop()
+
