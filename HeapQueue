@@ -1,0 +1,119 @@
+import heapq
+import tkinter as tk
+from tkinter import messagebox
+
+class PriorityQueue:
+    def __init__(self):
+        self._queue = {}
+        self._min_heap = []
+
+    def push(self, item, priority):
+        if priority in self._queue:
+            self._queue[priority].append(item)
+        else:
+            self._queue[priority] = [item]
+            heapq.heappush(self._min_heap, priority)
+
+    def pop(self):
+        if not self._min_heap:
+            raise IndexError("pop from an empty priority queue")
+        min_priority = heapq.heappop(self._min_heap)
+        item = self._queue[min_priority].pop(0)
+        if not self._queue[min_priority]:
+            del self._queue[min_priority]
+        return item
+
+    def is_empty(self):
+        return not self._min_heap
+
+    def peek(self):
+        if not self._min_heap:
+            raise IndexError("peek from an empty priority queue")
+        min_priority = self._min_heap[0]
+        return self._queue[min_priority][0]
+
+    def get_all_items(self):
+        items = []
+        for priority in sorted(self._queue.keys()):
+            for item in self._queue[priority]:
+                items.append((priority, item))
+        return items
+
+class HeapPriorityQueueApp:
+    def __init__(self, master):
+        self.master = master
+        self.master.title("Heap Priority Queue")
+        self.pq = PriorityQueue()  # Initialize the priority queue
+
+        self.create_widgets()
+
+    def create_widgets(self):
+        self.label = tk.Label(self.master, text="Heap Priority Queue", font=("Arial", 16))
+        self.label.pack(pady=10)
+
+        self.entry_frame = tk.Frame(self.master)
+        self.entry_frame.pack(pady=10)
+
+        self.item_label = tk.Label(self.entry_frame, text="Item:", font=("Arial", 12))
+        self.item_label.grid(row=0, column=0)
+
+        self.item_entry = tk.Entry(self.entry_frame, font=("Arial", 12))
+        self.item_entry.grid(row=0, column=1)
+
+        self.priority_label = tk.Label(self.entry_frame, text="Priority:", font=("Arial", 12))
+        self.priority_label.grid(row=1, column=0)
+
+        self.priority_entry = tk.Entry(self.entry_frame, font=("Arial", 12))
+        self.priority_entry.grid(row=1, column=1)
+
+        self.push_button = tk.Button(self.master, text="Push", command=self.push_item, font=("Arial", 12))
+        self.push_button.pack(pady=5)
+
+        self.pop_button = tk.Button(self.master, text="Pop", command=self.pop_item, font=("Arial", 12))
+        self.pop_button.pack(pady=5)
+
+        self.peek_button = tk.Button(self.master, text="Peek", command=self.peek_item, font=("Arial", 12))
+        self.peek_button.pack(pady=5)
+
+        self.quit_button = tk.Button(self.master, text="Quit", command=self.master.quit, font=("Arial", 12))
+        self.quit_button.pack(pady=5)
+
+        self.queue_display = tk.Listbox(self.master, font=("Arial", 12), height=10, width=40)
+        self.queue_display.pack(pady=5)
+
+    def push_item(self):
+        item = self.item_entry.get()
+        try:
+            priority = int(self.priority_entry.get())
+        except ValueError:
+            messagebox.showerror("Invalid Input", "Priority must be an integer.")
+            return
+        self.pq.push(item, priority)
+        messagebox.showinfo("Success", f"Pushed: {item} with priority {priority}")
+        self.update_display()
+
+    def pop_item(self):
+        if self.pq.is_empty():
+            messagebox.showwarning("Empty Queue", "The queue is empty.")
+            return
+        item = self.pq.pop()
+        messagebox.showinfo("Popped", f"Popped: {item}")
+        self.update_display()
+
+    def peek_item(self):
+        if self.pq.is_empty():
+            messagebox.showwarning("Empty Queue", "The queue is empty.")
+            return
+        item = self.pq.peek()
+        messagebox.showinfo("Peek", f"Next item: {item}")
+
+    def update_display(self):
+        self.queue_display.delete(0, tk.END)  # Clear current display
+        for priority, item in self.pq.get_all_items():
+            self.queue_display.insert(tk.END, f"{item} (Priority: {priority})")
+
+# If running this module directly, instantiate the app
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = HeapPriorityQueueApp(root)
+    root.mainloop()
