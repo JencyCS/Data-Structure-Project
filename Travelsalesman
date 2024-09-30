@@ -1,0 +1,201 @@
+import tkinter as tk
+from tkinter import messagebox, Toplevel
+from itertools import permutations
+import math
+import graphviz
+from PIL import Image, ImageTk
+import os
+
+class TSP:
+    def __init__(self, cities, distance_matrix):
+        self.cities = cities
+        self.distance_matrix = distance_matrix
+        self.num_cities = len(distance_matrix)
+
+    def calculate_total_distance(self, route):
+        total_distance = sum(self.distance_matrix[route[i]][route[i + 1]] for i in range(len(route) - 1))
+        total_distance += self.distance_matrix[route[-1]][route[0]]
+        return total_distance
+
+    def solve(self):
+        min_distance = math.inf
+        best_route = None
+        for perm in permutations(range(1, self.num_cities)):
+            current_route = (0,) + perm + (0,)
+            current_distance = self.calculate_total_distance(current_route)
+            if current_distance < min_distance:
+                min_distance = current_distance
+                best_route = current_route
+        return best_route, min_distance
+
+class TSPApp:
+    def __init__(self, master):
+        self.master = master
+        self.master.title("Traveling Salesman Problem Solver")
+        self.master.config(bg='lightblue')
+        self.master.geometry("900x600")
+
+        self.font_style = ("Helvetica", 12)
+
+        self.cities = []
+        self.distance_matrix_entries = []
+        self.symmetric = tk.BooleanVar(value=True)
+
+        # Frame for input and buttons (left side)
+        self.left_frame = tk.Frame(master, bg='lightblue')
+        self.left_frame.pack(side=tk.LEFT, padx=20, pady=20, fill=tk.Y)
+
+        self.label = tk.Label(self.left_frame, text="Traveling Salesman Problem Solver", bg='lightblue', fg='black', font=self.font_style)
+        self.label.pack(pady=10)
+
+        self.input_frame = tk.Frame(self.left_frame, bg='lightblue')
+        self.input_frame.pack(pady=20)
+
+        # Entry for number of cities
+        self.num_cities_label = tk.Label(self.input_frame, text="Number of Cities:", bg='lightblue', fg='black', font=self.font_style)
+        self.num_cities_label.pack(side=tk.LEFT, padx=10)
+        self.num_cities_entry = tk.Entry(self.input_frame, font=self.font_style)
+        self.num_cities_entry.pack(side=tk.LEFT, padx=10)
+
+        self.city_button = tk.Button(self.input_frame, text="Input Cities", command=self.get_cities, font=self.font_style)
+        self.city_button.pack(side=tk.LEFT, padx=10)
+
+        self.solve_button = tk.Button(self.input_frame, text="Solve TSP", command=self.solve_tsp, font=self.font_style)
+        self.solve_button.pack(side=tk.LEFT, padx=10)
+
+        # Symmetric/Non-Symmetric choice
+        self.symmetric_choice_label = tk.Label(self.left_frame, text="Distance Matrix Type:", bg='lightblue', font=self.font_style)
+        self.symmetric_choice_label.pack(pady=10)
+
+        self.symmetric_radio = tk.Radiobutton(self.left_frame, text="Symmetric", variable=self.symmetric, value=True, bg='lightblue', font=self.font_style)
+        self.symmetric_radio.pack(anchor=tk.W)
+        self.non_symmetric_radio = tk.Radiobutton(self.left_frame, text="Non-Symmetric", variable=self.symmetric, value=False, bg='lightblue', font=self.font_style)
+        self.non_symmetric_radio.pack(anchor=tk.W)
+
+        self.city_entries_frame = tk.Frame(self.left_frame, bg='lightblue')
+        self.city_entries_frame.pack(pady=10)
+
+        self.distance_entries_frame = tk.Frame(self.left_frame, bg='lightblue')
+        self.distance_entries_frame.pack(pady=10)
+
+    def get_cities(self):
+        try:
+            num_cities = int(self.num_cities_entry.get())
+            self.cities = []
+            self.city_entries_frame.pack_forget()  # Clear previous entries
+            self.distance_entries_frame.pack_forget()  # Clear distance entries
+
+            self.city_entries_frame = tk.Frame(self.left_frame, bg='lightblue')
+            self.city_entries_frame.pack(pady=10)
+
+            self.distance_entries_frame = tk.Frame(self.left_frame, bg='lightblue')
+            self.distance_entries_frame.pack(pady=10)
+
+            self.distance_matrix_entries = [[None for _ in range(num_cities)] for _ in range(num_cities)]  # Initialize here
+
+            # City Names in the left column
+            for i in range(num_cities):
+                city_frame = tk.Frame(self.city_entries_frame, bg='lightblue')
+                city_frame.pack(pady=5)
+
+                city_label = tk.Label(city_frame, text=f"City {i + 1}:", bg='lightblue', fg='black', font=self.font_style)
+                city_label.pack(side=tk.LEFT)
+
+                city_entry = tk.Entry(city_frame, font=self.font_style)
+                city_entry.pack(side=tk.LEFT)
+                city_entry.insert(0, f"City {i + 1}")
+                self.cities.append(city_entry)
+
+            # Create distance entries after city entries are fully populated
+            for i in range(num_cities):
+                for j in range(num_cities):
+                    if i != j or not self.symmetric.get():
+                        distance_frame = tk.Frame(self.distance_entries_frame, bg='lightblue')
+                        distance_frame.grid(row=i, column=j, padx=5, pady=5)
+
+                        label = tk.Label(distance_frame, text=f"Distance {self.cities[i].get()} to {self.cities[j].get()}:", bg='lightblue', fg='black', font=self.font_style)
+                        label.pack(anchor='w')
+
+                        distance_entry = tk.Entry(distance_frame, font=self.font_style, width=5)
+                        distance_entry.pack(anchor='w')
+                        self.distance_matrix_entries[i][j] = distance_entry
+        except ValueError:
+            messagebox.showwarning("Input Error", "Please enter a valid number of cities.")
+
+    def solve_tsp(self):
+        if not self.cities:
+            messagebox.showwarning("Input Error", "Please input cities first.")
+            return
+        
+        num_cities = len(self.cities)
+        self.distance_matrix = [[0 for _ in range(num_cities)] for _ in range(num_cities)]
+
+        for i in range(num_cities):
+            for j in range(num_cities):
+                if i != j or not self.symmetric.get():
+                    distance = self.distance_matrix_entries[i][j].get()
+                    self.distance_matrix[i][j] = float(distance) if distance else 0
+                    if self.symmetric.get():
+                        self.distance_matrix[j][i] = self.distance_matrix[i][j]
+
+        tsp = TSP(self.cities, self.distance_matrix)
+        best_route, min_distance = tsp.solve()
+        self.show_output_window(best_route, min_distance)
+
+    def show_output_window(self, route, min_distance):
+        output_window = Toplevel(self.master)
+        output_window.title("TSP Solution")
+        output_window.geometry("900x600")
+        output_window.config(bg='lightblue')
+
+        result_label = tk.Label(output_window, text=f"Optimal Route: {' -> '.join(self.cities[city].get() for city in route)}\nTotal Distance: {min_distance}",
+                                bg='lightblue', fg='black', font=self.font_style)
+        result_label.pack(pady=20)
+
+        graph_frame = tk.Frame(output_window, bg='lightblue')
+        graph_frame.pack(pady=10)
+
+        original_graph_canvas = tk.Canvas(graph_frame, width=400, height=400, bg='white')
+        original_graph_canvas.grid(row=0, column=0, padx=20)
+        self.plot_graph(original_graph_canvas, range(len(self.cities)), is_tsp_graph=False)
+
+        tsp_graph_canvas = tk.Canvas(graph_frame, width=400, height=400, bg='white')
+        tsp_graph_canvas.grid(row=0, column=1, padx=20)
+        self.plot_graph(tsp_graph_canvas, route, is_tsp_graph=True)
+
+        footer_label = tk.Label(output_window, text="TSP Solver by Jency", bg='lightblue', fg='black', font=self.font_style)
+        footer_label.pack(pady=10)
+
+    def plot_graph(self, canvas, route, is_tsp_graph=False):
+        canvas.delete("all")
+
+        dot = graphviz.Digraph(format='png')
+        num_cities = len(self.cities)
+
+        # Plot all possible routes for the original graph
+        if not is_tsp_graph:
+            for i in range(num_cities):
+                for j in range(num_cities):
+                    if i != j:
+                        dot.edge(str(i), str(j), label=str(self.distance_matrix[i][j]))
+
+        # Plot the TSP solved graph
+        else:
+            for i in range(len(route)):
+                dot.node(str(route[i]), self.cities[route[i]].get())
+                if i > 0:
+                    dot.edge(str(route[i - 1]), str(route[i]), label=str(self.distance_matrix[route[i - 1]][route[i]]))
+
+        dot.render('tsp_graph')
+        img = Image.open('tsp_graph.png')
+        img = img.resize((300, 300), Image.Resampling.LANCZOS)
+        img_tk = ImageTk.PhotoImage(img)
+        canvas.create_image(0, 0, anchor=tk.NW, image=img_tk)
+        canvas.image = img_tk
+
+        os.remove('tsp_graph.png')
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = TSPApp(root)
+    root.mainloop()
