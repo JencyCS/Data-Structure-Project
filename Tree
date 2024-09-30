@@ -1,0 +1,224 @@
+import tkinter as tk
+from tkinter import ttk, messagebox
+from PIL import Image, ImageTk
+import graphviz
+import os
+
+class TreeNode:
+    def __init__(self, value):
+        self.value = value
+        self.left = None
+        self.right = None
+
+class BinaryTree:
+    def __init__(self):
+        self.binary_tree = None
+
+    def insert_level_order(self, arr, root, i, n):
+        if i < n:
+            if arr[i] is None:
+                return None
+            temp = TreeNode(arr[i])
+            root = temp
+            root.left = self.insert_level_order(arr, root.left, 2 * i + 1, n)
+            root.right = self.insert_level_order(arr, root.right, 2 * i + 2, n)
+        return root
+
+    def build_tree(self, nodes):
+        nodes = [node if node != 'None' else None for node in nodes]
+        n = len(nodes)
+        return self.insert_level_order(nodes, None, 0, n)
+
+    def build_binary_tree(self, nodes):
+        self.binary_tree = self.build_tree(nodes)
+
+    def get_binary_tree(self):
+        return self.binary_tree
+
+    def insert_node(self, value, parent_value):
+        def insert_recursive(node, value, parent_value):
+            if not node:
+                return None
+            if node.value == parent_value:
+                if not node.left:
+                    node.left = TreeNode(value)
+                    return True
+                elif not node.right:
+                    node.right = TreeNode(value)
+                    return True
+            return insert_recursive(node.left, value, parent_value) or insert_recursive(node.right, value, parent_value)
+
+        if not self.binary_tree:
+            messagebox.showerror("Error", "Please build a tree first.")
+        elif not insert_recursive(self.binary_tree, value, parent_value):
+            messagebox.showerror("Error", "Parent node not found or both child nodes are occupied.")
+
+    def delete_node(self, value):
+        def delete_recursive(node, value):
+            if not node:
+                return None
+            if node.left and node.left.value == value:
+                node.left = None
+                return True
+            if node.right and node.right.value == value:
+                node.right = None
+                return True
+            return delete_recursive(node.left, value) or delete_recursive(node.right, value)
+
+        if not self.binary_tree:
+            messagebox.showerror("Error", "Please build a tree first.")
+        elif not delete_recursive(self.binary_tree, value):
+            messagebox.showerror("Error", "Node not found.")
+
+    def traverse(self, node, traversal_type):
+        if not node:
+            return []
+
+        if traversal_type == "preorder":
+            return [node.value] + self.traverse(node.left, traversal_type) + self.traverse(node.right, traversal_type)
+        elif traversal_type == "inorder":
+            return self.traverse(node.left, traversal_type) + [node.value] + self.traverse(node.right, traversal_type)
+        elif traversal_type == "postorder":
+            return self.traverse(node.left, traversal_type) + self.traverse(node.right, traversal_type) + [node.value]
+
+    def draw_tree(self, binary_tree):
+        if not binary_tree:
+            messagebox.showinfo("Empty Tree", "Tree is empty.")
+            return None
+
+        def add_edges(dot, node):
+            if node:
+                dot.node(str(node.value), str(node.value))  # Add node itself
+                if node.left:
+                    dot.edge(str(node.value), str(node.left.value))
+                    add_edges(dot, node.left)
+                if node.right:
+                    dot.edge(str(node.value), str(node.right.value))
+                    add_edges(dot, node.right)
+
+        dot = graphviz.Digraph()
+        add_edges(dot, binary_tree)
+
+        temp_file_path = 'binary_tree'
+        dot.render(temp_file_path, format='png', cleanup=True)
+
+        if os.path.exists(f'{temp_file_path}.png'):
+            return f'{temp_file_path}.png'
+        else:
+            messagebox.showerror("Error", "Failed to generate tree image.")
+            return None
+
+class BinaryTreeGUI:
+    def __init__(self, root):
+        self.tree_logic = BinaryTree()
+        self.binary_tree = None
+        self.root = root
+        self.root.title("Binary Tree GUI")
+        self.root.configure(bg='lightblue')
+
+        self.frame = ttk.Frame(root, padding="10")
+        self.frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        self.frame.configure(style='TFrame')
+
+        # Create a style for the labels and buttons
+        self.style = ttk.Style()
+        self.style.configure('TFrame', background='lightblue')
+        self.style.configure('TLabel', background='lightblue', font=('Arial', 12))
+        self.style.configure('TButton', background='lightgreen', font=('Arial', 10), padding=5)
+        self.style.map('TButton', background=[('pressed', 'lightcoral'), ('active', 'lightgreen')])
+
+        self.create_widgets()
+
+    def create_widgets(self):
+        title_label = ttk.Label(self.frame, text="Binary Tree Visualization", font=('Arial', 16, 'bold'))
+        title_label.grid(row=0, column=0, columnspan=5, padx=5, pady=10)
+
+        label = ttk.Label(self.frame, text="Enter nodes (comma-separated):")
+        label.grid(row=1, column=0, padx=5, pady=5)
+
+        self.entry = ttk.Entry(self.frame, width=50)
+        self.entry.grid(row=2, column=0, padx=5, pady=5)
+
+        button_build = ttk.Button(self.frame, text="Build and Draw Binary Tree", command=self.build_and_draw_tree)
+        button_build.grid(row=3, column=0, padx=5, pady=5)
+
+        label_insert = ttk.Label(self.frame, text="Insert Node Value:")
+        label_insert.grid(row=4, column=0, padx=5, pady=5, sticky=tk.W)
+        self.entry_insert = ttk.Entry(self.frame)
+        self.entry_insert.grid(row=4, column=1, padx=5, pady=5, sticky=tk.W)
+
+        label_parent = ttk.Label(self.frame, text="Parent Node Value:")
+        label_parent.grid(row=5, column=0, padx=5, pady=5, sticky=tk.W)
+        self.entry_parent = ttk.Entry(self.frame)
+        self.entry_parent.grid(row=5, column=1, padx=5, pady=5, sticky=tk.W)
+
+        button_insert = ttk.Button(self.frame, text="Insert", command=self.insert_node)
+        button_insert.grid(row=4, column=2, padx=5, pady=5)
+
+        label_delete = ttk.Label(self.frame, text="Delete Node Value:")
+        label_delete.grid(row=6, column=0, padx=5, pady=5, sticky=tk.W)
+        self.entry_delete = ttk.Entry(self.frame)
+        self.entry_delete.grid(row=6, column=1, padx=5, pady=5, sticky=tk.W)
+
+        button_delete = ttk.Button(self.frame, text="Delete", command=self.delete_node)
+        button_delete.grid(row=6, column=2, padx=5, pady=5)
+
+        label_traverse = ttk.Label(self.frame, text="Traverse Tree:")
+        label_traverse.grid(row=7, column=0, padx=5, pady=5, sticky=tk.W)
+        button_preorder = ttk.Button(self.frame, text="Preorder", command=lambda: self.traverse_tree("preorder"))
+        button_preorder.grid(row=7, column=1, padx=5, pady=5)
+        button_inorder = ttk.Button(self.frame, text="Inorder", command=lambda: self.traverse_tree("inorder"))
+        button_inorder.grid(row=8, column=1, padx=5, pady=5)
+        button_postorder = ttk.Button(self.frame, text="Postorder", command=lambda: self.traverse_tree("postorder"))
+        button_postorder.grid(row=9, column=1, padx=5, pady=5)
+
+        self.image_label = ttk.Label(self.frame)
+        self.image_label.grid(row=1, column=3, rowspan=9, padx=5, pady=5)
+
+        footer_label = tk.Label(self.root, text="Name: Jency Nadar   Roll No: S094", font=("Helvetica", 10))
+        footer_label.grid(row=15, column=15, padx=10, pady=5)
+
+    def build_and_draw_tree(self):
+        nodes_input = self.entry.get()
+        nodes = nodes_input.split(',')
+        nodes = [x.strip() if x.strip() else 'None' for x in nodes]
+        self.tree_logic.build_binary_tree(nodes)
+        self.binary_tree = self.tree_logic.get_binary_tree()
+        self.draw_tree()
+
+    def draw_tree(self):
+        tree_image_path = self.tree_logic.draw_tree(self.binary_tree)
+        if tree_image_path:
+            img = Image.open(tree_image_path)
+            img_tk = ImageTk.PhotoImage(img)
+            self.image_label.config(image=img_tk)
+            self.image_label.image = img_tk
+
+    def insert_node(self):
+        new_value = self.entry_insert.get()
+        parent_value = self.entry_parent.get()
+        if not new_value or not parent_value:
+            messagebox.showerror("Invalid Input", "Please enter both a value and a parent value.")
+            return
+        self.tree_logic.insert_node(new_value, parent_value)
+        self.draw_tree()
+
+    def delete_node(self):
+        delete_value = self.entry_delete.get()
+        if not delete_value:
+            messagebox.showerror("Invalid Input", "Please enter a value to delete.")
+            return
+        self.tree_logic.delete_node(delete_value)
+        self.draw_tree()
+
+    def traverse_tree(self, traversal_type):
+        if not self.binary_tree:
+            messagebox.showerror("Error", "Please build a tree first.")
+            return
+        result = self.tree_logic.traverse(self.binary_tree, traversal_type)
+        messagebox.showinfo(f"{traversal_type.capitalize()} Traversal", " -> ".join(str(x) for x in result))
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = BinaryTreeGUI(root)
+    root.mainloop()
