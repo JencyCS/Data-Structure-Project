@@ -1,0 +1,174 @@
+import tkinter as tk
+from graphviz import Digraph
+from PIL import Image, ImageTk
+from collections import deque
+
+class GraphVisualizer:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Graph Visualizer")
+        self.root.configure(bg='lightblue')
+        self.routes = {}
+
+        # Add a title to the window
+        title_label = tk.Label(self.root, text="Graph Visualization Tool", font=("Helvetica", 18, "bold"), bg='lightblue')
+        title_label.pack(pady=10)
+
+        # Create a PanedWindow with two panes
+        paned_window = tk.PanedWindow(self.root, orient=tk.HORIZONTAL)
+        paned_window.pack(expand=1, fill=tk.BOTH)
+
+        # Frame for input fields
+        input_frame = tk.Frame(paned_window, bg='lightblue', padx=10, pady=10)
+        input_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        paned_window.add(input_frame)
+
+        # Input fields and buttons for operations
+        self.create_input_fields(input_frame)
+
+        # Frame for graph display
+        graph_frame = tk.Frame(paned_window, bg='white')
+        graph_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+        paned_window.add(graph_frame)
+
+        self.graph_display = tk.Canvas(graph_frame, width=400, height=400, bg='white')
+        self.graph_display.pack(pady=20)
+
+        # Footer
+        footer = tk.Label(self.root, text="Jency Nadar S094", font=("Helvetica", 14), bg='lightblue')
+        footer.pack(pady=10, side=tk.BOTTOM)
+
+    def create_input_fields(self, input_frame):
+        tk.Label(input_frame, text="Route Name:", font=("Helvetica", 14), bg='lightblue').grid(row=0, column=0, padx=5, pady=5)
+        self.entry_route_name = tk.Text(input_frame, width=30, height=1, font=("Helvetica", 16))
+        self.entry_route_name.grid(row=0, column=1, padx=5, pady=5)
+
+        tk.Label(input_frame, text="Start Vertex:", font=("Helvetica", 14), bg='lightblue').grid(row=1, column=0, padx=5, pady=5)
+        self.entry_start = tk.Text(input_frame, width=30, height=1, font=("Helvetica", 16))
+        self.entry_start.grid(row=1, column=1, padx=5, pady=5)
+
+        tk.Label(input_frame, text="End Vertex:", font=("Helvetica", 14), bg='lightblue').grid(row=2, column=0, padx=5, pady=5)
+        self.entry_end = tk.Text(input_frame, width=30, height=1, font=("Helvetica", 16))
+        self.entry_end.grid(row=2, column=1, padx=5, pady=5)
+
+        tk.Label(input_frame, text="Vertices (e.g., A->B->C):", font=("Helvetica", 14), bg='lightblue').grid(row=3, column=0, padx=5, pady=5)
+        self.entry_route = tk.Text(input_frame, width=30, height=3, font=("Helvetica", 16))
+        self.entry_route.grid(row=3, column=1, padx=5, pady=5)
+
+        # Buttons for inserting, deleting, DFS, and BFS
+        insert_button = tk.Button(input_frame, text="Insert", font=("Helvetica", 14), command=self.insert_route)
+        insert_button.grid(row=4, column=0, padx=5, pady=10)
+
+        delete_button = tk.Button(input_frame, text="Delete", font=("Helvetica", 14), command=self.delete_route)
+        delete_button.grid(row=4, column=1, padx=5, pady=10)
+
+        dfs_button = tk.Button(input_frame, text="DFS", font=("Helvetica", 14),
+                               command=lambda: self.dfs(self.entry_start.get("1.0", "end-1c").strip(),
+                                                        self.entry_end.get("1.0", "end-1c").strip()))
+        dfs_button.grid(row=5, column=0, padx=5, pady=10)
+
+        bfs_button = tk.Button(input_frame, text="BFS", font=("Helvetica", 14),
+                               command=lambda: self.bfs(self.entry_start.get("1.0", "end-1c").strip(),
+                                                        self.entry_end.get("1.0", "end-1c").strip()))
+        bfs_button.grid(row=5, column=1, padx=5, pady=10)
+
+        # Label to display the list of routes
+        tk.Label(input_frame, text="Route List:", font=("Helvetica", 14), bg='lightblue').grid(row=6, column=0, padx=5, pady=5)
+        self.route_list_label = tk.Label(input_frame, text="", font=("Helvetica", 14), bg='lightblue', justify=tk.LEFT)
+        self.route_list_label.grid(row=7, column=0, columnspan=2, padx=5, pady=10)
+
+    def create_graph(self, highlighted_nodes=None):
+        dot = Digraph()
+
+        # Add start and end vertices with unique colors
+        for route_name, (start_vertex, end_vertex, route) in self.routes.items():
+            dot.node(start_vertex, color='red', style='filled', fillcolor='yellow')
+            dot.node(end_vertex, color='blue', style='filled', fillcolor='lightblue')
+
+            # Split route and add nodes and edges to the graph
+            nodes = route.split("->")
+            if nodes[0] != start_vertex:
+                nodes.insert(0, start_vertex)
+            if nodes[-1] != end_vertex:
+                nodes.append(end_vertex)
+
+            for i in range(len(nodes) - 1):
+                dot.node(nodes[i], color='green' if highlighted_nodes and nodes[i] in highlighted_nodes else '')
+                dot.node(nodes[i + 1], color='green' if highlighted_nodes and nodes[i + 1] in highlighted_nodes else '')
+                dot.edge(nodes[i], nodes[i + 1])
+
+        dot.render('graph', format='png')  # Save the graph as a PNG file
+
+        # Load and display the graph image
+        img = Image.open('graph.png')
+        img = img.resize((400, 400))
+        img = ImageTk.PhotoImage(img)
+
+        self.graph_display.create_image(0, 0, anchor=tk.NW, image=img)
+        self.graph_display.image = img
+
+    def update_route_list(self):
+        self.route_list_label.config(text="\n".join(self.routes.keys()))
+
+    def insert_route(self):
+        route_name = self.entry_route_name.get("1.0", "end-1c")
+        start_vertex = self.entry_start.get("1.0", "end-1c")
+        end_vertex = self.entry_end.get("1.0", "end-1c")
+        route = self.entry_route.get("1.0", "end-1c")
+
+        if route_name and start_vertex and end_vertex and route:
+            self.routes[route_name] = (start_vertex, end_vertex, route)
+            self.create_graph()
+            self.update_route_list()
+
+    def delete_route(self):
+        route_name = self.entry_route_name.get("1.0", "end-1c")
+        if route_name in self.routes:
+            del self.routes[route_name]
+            self.create_graph()
+            self.update_route_list()
+
+    def dfs(self, start_vertex, end_vertex):
+        visited = set()
+        stack = [start_vertex]
+        highlighted_nodes = []
+
+        while stack:
+            vertex = stack.pop()
+            if vertex not in visited:
+                visited.add(vertex)
+                highlighted_nodes.append(vertex)
+                if vertex == end_vertex:
+                    break
+                for route_name, (start, end, route) in self.routes.items():
+                    if vertex == start:
+                        neighbors = route.split("->")
+                        stack.extend(neighbors[::-1])  # Reverse to maintain DFS order
+
+        self.create_graph(highlighted_nodes)
+
+    def bfs(self, start_vertex, end_vertex):
+        visited = set()
+        queue = deque([start_vertex])
+        highlighted_nodes = []
+
+        while queue:
+            vertex = queue.popleft()
+            if vertex not in visited:
+                visited.add(vertex)
+                highlighted_nodes.append(vertex)
+                if vertex == end_vertex:
+                    break
+                for route_name, (start, end, route) in self.routes.items():
+                    if vertex == start:
+                        neighbors = route.split("->")
+                        queue.extend(neighbors)
+
+        self.create_graph(highlighted_nodes)
+
+
+# Main application runner
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = GraphVisualizer(root)
+    root.mainloop()
