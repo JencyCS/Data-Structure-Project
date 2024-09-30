@@ -1,0 +1,118 @@
+import tkinter as tk
+from tkinter import messagebox
+
+class Queue:
+    def __init__(self):
+        self.queue = []
+
+    def enqueue(self, item):
+        self.queue.append(item)
+
+    def dequeue(self):
+        if not self.is_empty():
+            return self.queue.pop(0)
+        else:
+            return None
+
+    def peek(self):
+        if not self.is_empty():
+            return self.queue[0]
+        else:
+            return None
+
+    def is_empty(self):
+        return len(self.queue) == 0
+
+    def size(self):
+        return len(self.queue)
+
+    def display(self):
+        return self.queue
+
+class QueueGUI:
+    def __init__(self, root):
+        self.queue = Queue()
+        self.root = root
+        self.root.title("Queue GUI")
+
+        self.root.configure(bg="white")
+        self.main_frame = tk.Frame(root, bg="lightblue")
+        self.main_frame.pack(pady=10)
+
+        self.title_label = tk.Label(self.main_frame, text="Queue Operations", bg="lightblue", font=("Arial", 16, "bold"))
+        self.title_label.grid(row=0, column=0, columnspan=3, pady=10)
+
+        self.input_label = tk.Label(self.main_frame, text="Enter element to enqueue:", bg="#f0f0f0", font=("Arial", 12))
+        self.input_label.grid(row=1, column=0, padx=5, pady=5)
+
+        self.input_entry = tk.Entry(self.main_frame, font=("Arial", 12))
+        self.input_entry.grid(row=1, column=1, padx=5, pady=5)
+
+        self.enqueue_button = tk.Button(self.main_frame, text="Enqueue", command=self.enqueue, bg="#4caf50", fg="white", font=("Arial", 12))
+        self.enqueue_button.grid(row=2, column=0, padx=5, pady=5)
+        
+        self.dequeue_button = tk.Button(self.main_frame, text="Dequeue", command=self.dequeue, bg="#f44336", fg="white", font=("Arial", 12))
+        self.dequeue_button.grid(row=2, column=1, padx=5, pady=5)
+
+        self.peek_button = tk.Button(self.main_frame, text="Peek", command=self.peek, bg="#2196f3", fg="white", font=("Arial", 12))
+        self.peek_button.grid(row=2, column=2, padx=5, pady=5)
+
+        self.is_empty_button = tk.Button(self.main_frame, text="Is Empty", command=self.is_empty, bg="#ff9800", fg="white", font=("Arial", 12))
+        self.is_empty_button.grid(row=3, column=0, padx=5, pady=5)
+
+        self.size_button = tk.Button(self.main_frame, text="Size", command=self.size, bg="#9c27b0", fg="white", font=("Arial", 12))
+        self.size_button.grid(row=3, column=1, padx=5, pady=5)
+
+        self.display_button = tk.Button(self.main_frame, text="Display", command=self.display, bg="#795548", fg="white", font=("Arial", 12))
+        self.display_button.grid(row=3, column=2, padx=5, pady=5)
+
+        self.exit_button = tk.Button(self.main_frame, text="Exit", command=root.quit, bg="#607d8b", fg="white", font=("Arial", 12))
+        self.exit_button.grid(row=4, column=1, padx=5, pady=5)
+
+        self.result_title_label = tk.Label(self.main_frame, text="Output", bg="#f0f0f0", font=("Arial", 14, "bold"))
+        self.result_title_label.grid(row=5, column=0, columnspan=3, pady=10)
+
+        self.result_label = tk.Label(self.main_frame, text="", bg="#f0f0f0", font=("Arial", 12))
+        self.result_label.grid(row=6, column=0, columnspan=3, padx=5, pady=5)
+
+    def enqueue(self):
+        item = self.input_entry.get()
+        if item.isdigit():
+            self.queue.enqueue(int(item))
+            self.result_label.config(text=f"Enqueued item: {item}", fg="#4caf50")
+        else:
+            messagebox.showerror("Invalid input", "Please enter a valid integer")
+        self.input_entry.delete(0, tk.END)
+
+    def dequeue(self):
+        item = self.queue.dequeue()
+        if item is not None:
+            self.result_label.config(text=f"Dequeued item: {item}", fg="#f44336")
+        else:
+            self.result_label.config(text="Queue is empty", fg="#f44336")
+
+    def peek(self):
+        item = self.queue.peek()
+        if item is not None:
+            self.result_label.config(text=f"Front element: {item}", fg="#2196f3")
+        else:
+            self.result_label.config(text="Queue is empty", fg="#2196f3")
+
+    def is_empty(self):
+        if self.queue.is_empty():
+            self.result_label.config(text="Queue is empty", fg="#ff9800")
+        else:
+            self.result_label.config(text="Queue is not empty", fg="#ff9800")
+
+    def size(self):
+        size = self.queue.size()
+        self.result_label.config(text=f"Size of queue: {size}", fg="#9c27b0")
+
+    def display(self):
+        queue = self.queue.display()
+        self.result_label.config(text=f"Queue: {queue}", fg="#795548")
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = QueueGUI(root)
+    root.mainloop()
