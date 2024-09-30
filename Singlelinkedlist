@@ -1,0 +1,138 @@
+import tkinter as tk
+from tkinter import messagebox, simpledialog
+
+class Node:
+    def __init__(self, data):
+        self.data = data
+        self.next = None
+
+class LinkedList:
+    def __init__(self):
+        self.head = None
+
+    def insert_at_end(self, data):
+        new_node = Node(data)
+        if self.head is None:
+            self.head = new_node
+            return
+        last = self.head
+        while last.next:
+            last = last.next
+        last.next = new_node
+
+    def insert_at_beginning(self, data):
+        new_node = Node(data)
+        new_node.next = self.head
+        self.head = new_node
+
+    def delete_node(self, key):
+        temp = self.head
+
+        if temp is not None:
+            if temp.data == key:
+                self.head = temp.next
+                temp = None
+                return
+
+        while temp is not None:
+            if temp.data == key:
+                break
+            prev = temp
+            temp = temp.next
+
+        if temp is None:
+            messagebox.showinfo("Error", "Key not found in the linked list.")
+            return
+
+        prev.next = temp.next
+        temp = None
+
+    def traverse(self):
+        temp = self.head
+        if temp is None:
+            return "Linked list is empty."
+
+        nodes = []
+        while temp:
+            nodes.append(str(temp.data))
+            temp = temp.next
+        return " -> ".join(nodes) + " -> None"
+
+class LinkedListApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Linked List Operations")
+
+        self.linked_list = LinkedList()
+
+        self.label = tk.Label(root, text="Linked List Operations", font=("Courier New", 24, "bold"), fg="#333", pady=10, bg="lightblue")
+        self.label.pack()
+
+        self.input_frame = tk.Frame(root, bg="lightblue")
+        self.input_frame.pack()
+
+        self.entry_insert_end = tk.Entry(self.input_frame, font=("Courier New", 14), width=20)
+        self.entry_insert_end.grid(row=0, column=1, padx=5, pady=10)
+
+        self.button_insert_end = tk.Button(self.input_frame, text="Insert at End", command=self.insert_end, font=("Courier New", 14), padx=20, pady=10, bg="white", fg="#333", activebackground="#45a049")
+        self.button_insert_end.grid(row=0, column=2, padx=5, pady=10)
+
+        self.entry_insert_beginning = tk.Entry(self.input_frame, font=("Courier New", 14), width=20)
+        self.entry_insert_beginning.grid(row=1, column=1, padx=5, pady=10)
+
+        self.button_insert_beginning = tk.Button(self.input_frame, text="Insert at Beginning", command=self.insert_beginning, font=("Courier New", 14), padx=20, pady=10, bg="white", fg="#333", activebackground="#0077A3")
+        self.button_insert_beginning.grid(row=1, column=2, padx=5, pady=10)
+
+        self.entry_delete = tk.Entry(self.input_frame, font=("Courier New", 14), width=20)
+        self.entry_delete.grid(row=2, column=1, padx=5, pady=10)
+
+        self.button_delete = tk.Button(self.input_frame, text="Delete Node", command=self.delete_node, font=("Courier New", 14), padx=20, pady=10, bg="white", fg="#333", activebackground="#d32f2f")
+        self.button_delete.grid(row=2, column=2, padx=5, pady=10)
+
+        self.output_text = tk.Text(root, height=5, width=30, font=("Courier New", 12))
+        self.output_text.pack(pady=10)
+
+        self.button_traverse = tk.Button(root, text="Traverse List", command=self.traverse, font=("Courier New", 14), padx=20, pady=10, bg="white", fg="#333", activebackground="#FFA000")
+        self.button_traverse.pack(pady=10)
+
+        self.button_exit = tk.Button(root, text="Exit", command=root.quit, font=("Courier New", 14), padx=20, pady=10, bg="white", fg="#333", activebackground="#455A64")
+        self.button_exit.pack(pady=10)
+
+    def insert_end(self):
+        data = self.entry_insert_end.get()
+        if data.strip():  # Check if the input is not empty
+            self.linked_list.insert_at_end(int(data))
+            self.update_output()
+
+    def insert_beginning(self):
+        data = self.entry_insert_beginning.get()
+        if data.strip():  # Check if the input is not empty
+            self.linked_list.insert_at_beginning(int(data))
+            self.update_output()
+
+    def delete_node(self):
+        data = self.entry_delete.get()
+        if data.strip():  # Check if the input is not empty
+            self.linked_list.delete_node(int(data))
+            self.update_output()
+
+    def traverse(self):
+        result = self.linked_list.traverse()
+        self.output_text.delete(1.0, tk.END)  # Clear previous output
+        self.output_text.insert(tk.END, result)
+
+    def update_output(self):
+        result = self.linked_list.traverse()
+        self.output_text.delete(1.0, tk.END)  # Clear previous output
+        self.output_text.insert(tk.END, result)
+
+def main():
+    root = tk.Tk()
+    root.geometry("600x500")
+    root.configure(bg='lightblue')  # Set background color
+
+    app = LinkedListApp(root)
+    root.mainloop()
+
+if __name__ == "__main__":
+    main()
